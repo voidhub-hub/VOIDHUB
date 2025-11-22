@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>VoidHub Icon Generator</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #1a1a2e;
+      font-family: Arial;
+    }
+    .container {
+      text-align: center;
+    }
+    canvas {
+      border: 2px solid #667eea;
+      border-radius: 20px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 15px 30px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 style="color: white;">VoidHub Icon Generator</h1>
+    <canvas id="canvas" width="256" height="256"></canvas>
+    <br>
+    <button onclick="downloadIcon()">Скачать PNG</button>
+    <p style="color: #aaa; margin-top: 20px;">
+      После скачивания конвертируй в .ico на<br>
+      <a href="https://convertio.co/png-ico/" target="_blank" style="color: #667eea;">convertio.co/png-ico</a>
+    </p>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Фон с градиентом
+    const gradient = ctx.createLinearGradient(0, 0, 256, 256);
+    gradient.addColorStop(0, '#667eea');
+    gradient.addColorStop(1, '#764ba2');
+    
+    // Закругленный квадрат
+    ctx.fillStyle = '#0a0a0f';
+    roundRect(ctx, 0, 0, 256, 256, 40);
+    ctx.fill();
+
+    // Градиентный круг
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(128, 128, 90, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Звезды
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    for (let i = 0; i < 30; i++) {
+      const x = Math.random() * 256;
+      const y = Math.random() * 256;
+      const size = Math.random() * 2 + 1;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Геймпад (упрощенный)
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(90, 110, 76, 36);
+    ctx.beginPath();
+    ctx.arc(90, 128, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(166, 128, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Крестовина
+    ctx.fillStyle = 'white';
+    ctx.fillRect(100, 123, 10, 10);
+    ctx.fillRect(105, 118, 10, 10);
+    ctx.fillRect(105, 128, 10, 10);
+    ctx.fillRect(95, 123, 10, 10);
+
+    // Кнопки
+    ctx.beginPath();
+    ctx.arc(145, 123, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(155, 123, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(150, 118, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(150, 128, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Текст VH
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('VH', 128, 190);
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function downloadIcon() {
+      const link = document.createElement('a');
+      link.download = 'voidhub-icon.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+  </script>
+</body>
+</html>

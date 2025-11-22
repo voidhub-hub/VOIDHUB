@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GamePlatform</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="titlebar">
+    <div class="titlebar-drag">
+      <span class="app-title">VoidHub</span>
+    </div>
+    <div class="user-section">
+      <span class="user-icon">👤</span>
+      <span class="user-name" id="user-info" onclick="toggleUserMenu()">Guest</span>
+    </div>
+    <div class="window-controls">
+      <button class="window-btn" id="minimize">─</button>
+      <button class="window-btn" id="maximize">□</button>
+      <button class="window-btn close" id="close">✕</button>
+    </div>
+  </div>
+
+  <div class="user-dropdown" id="user-dropdown">
+    <div class="dropdown-item" onclick="goToProfile()">
+      <span>👤</span>
+      <span>Профиль</span>
+    </div>
+    <div class="dropdown-item" onclick="goToShop()">
+      <span>🛍️</span>
+      <span>Магазин</span>
+    </div>
+    <div class="dropdown-divider"></div>
+    <div class="dropdown-item" onclick="logout()">
+      <span>🚪</span>
+      <span>Выйти</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <nav class="sidebar">
+      <div class="nav-item active" data-page="library">
+        <span class="icon">🎮</span>
+        <span>Библиотека</span>
+      </div>
+      <div class="nav-item" data-page="store">
+        <span class="icon">🛒</span>
+        <span>Магазин</span>
+      </div>
+      <div class="nav-item" data-page="downloads">
+        <span class="icon">⬇️</span>
+        <span>Загрузки</span>
+      </div>
+      <div class="nav-item" data-page="upload">
+        <span class="icon">📤</span>
+        <span>Загрузить игру</span>
+      </div>
+      <div class="nav-item" data-page="profile">
+        <span class="icon">👤</span>
+        <span>Профиль</span>
+      </div>
+      <div class="nav-item" data-page="community">
+        <span class="icon">👥</span>
+        <span>Сообщество</span>
+      </div>
+      <div class="nav-item" data-page="achievements">
+        <span class="icon">🏆</span>
+        <span>Достижения</span>
+      </div>
+      <div class="nav-item" data-page="shop">
+        <span class="icon">🛍️</span>
+        <span>Магазин</span>
+      </div>
+      <div class="nav-item" data-page="settings">
+        <span class="icon">⚙️</span>
+        <span>Настройки</span>
+      </div>
+    </nav>
+
+    <main class="content">
+      <div class="page active" id="library">
+        <h1>Моя библиотека</h1>
+        <div class="games-grid" id="library-games"></div>
+      </div>
+
+      <div class="page" id="store">
+        <h1>Магазин игр</h1>
+        <div class="games-grid" id="store-games"></div>
+      </div>
+
+      <div class="page" id="downloads">
+        <h1>Загрузки</h1>
+        <div id="downloads-list"></div>
+      </div>
+
+      <div class="page" id="upload">
+        <h1>Загрузить игру</h1>
+        <div class="upload-content">
+          <div class="upload-form">
+            <div class="form-item">
+              <label>Название игры</label>
+              <input type="text" id="upload-title" placeholder="Введите название">
+            </div>
+            <div class="form-item">
+              <label>Размер</label>
+              <input type="text" id="upload-size" placeholder="например: 15 GB">
+            </div>
+            <div class="form-item">
+              <label>Иконка (emoji)</label>
+              <input type="text" id="upload-icon" placeholder="🎮" maxlength="2">
+            </div>
+            <button class="upload-btn" id="upload-btn">Выбрать папку и загрузить</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="profile">
+        <div class="profile-container">
+          <div class="profile-header" id="profile-header">
+            <div class="profile-avatar-container">
+              <div class="avatar-frame" id="avatar-frame">
+                <div class="profile-avatar" id="profile-avatar">🎮</div>
+              </div>
+              <div class="level-badge" id="level-badge">1</div>
+            </div>
+            <div class="profile-info">
+              <h2 class="profile-username" id="profile-username">Guest</h2>
+              <div class="profile-stats">
+                <div class="stat">
+                  <span class="stat-icon">⭐</span>
+                  <span class="stat-value" id="user-xp">0</span>
+                  <span class="stat-label">XP</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-icon">🪙</span>
+                  <span class="stat-value" id="user-coins">0</span>
+                  <span class="stat-label">Монет</span>
+                </div>
+              </div>
+              <div class="xp-bar">
+                <div class="xp-fill" id="xp-fill"></div>
+                <span class="xp-text" id="xp-text">0 / 100</span>
+              </div>
+            </div>
+          </div>
+          <div class="profile-achievements">
+            <h3>Последняя активность</h3>
+            <div id="activity-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="shop">
+        <h1>Магазин кастомизации</h1>
+        <div class="shop-balance">
+          <span class="shop-coins">🪙 <span id="shop-coins">0</span> монет</span>
+        </div>
+        <div class="shop-categories">
+          <button class="shop-tab active" onclick="filterShop('all')">Все</button>
+          <button class="shop-tab" onclick="filterShop('frame')">Рамки</button>
+          <button class="shop-tab" onclick="filterShop('background')">Фоны</button>
+        </div>
+        <div class="shop-grid" id="shop-grid"></div>
+      </div>
+
+      <div class="page" id="community">
+        <h1>Сообщество</h1>
+        <div class="community-stats">
+          <div class="stat-card">
+            <div class="stat-number" id="total-users">0</div>
+            <div class="stat-label">Пользователей</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="total-games">0</div>
+            <div class="stat-label">Игр</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="total-downloads">0</div>
+            <div class="stat-label">Скачиваний</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="online-users">0</div>
+            <div class="stat-label">Онлайн</div>
+          </div>
+        </div>
+        <div class="leaderboard">
+          <h2>🏆 Топ игроков</h2>
+          <div id="leaderboard-list"></div>
+        </div>
+        <div class="recent-activity">
+          <h2>📰 Последняя активность</h2>
+          <div id="global-activity"></div>
+        </div>
+      </div>
+
+      <div class="page" id="achievements">
+        <h1>Достижения</h1>
+        <div class="achievements-progress">
+          <div class="progress-info">
+            <span id="unlocked-count">0</span> из <span id="total-achievements">12</span> разблокировано
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="achievements-progress"></div>
+          </div>
+        </div>
+        <div class="achievements-grid" id="achievements-grid"></div>
+      </div>
+
+      <div class="page" id="settings">
+        <h1>Настройки</h1>
+        <div class="settings-content">
+          <div class="setting-item">
+            <label>Папка установки игр</label>
+            <input type="text" id="install-path" readonly>
+          </div>
+          <div class="setting-item">
+            <label>Уведомления</label>
+            <label class="switch">
+              <input type="checkbox" id="notifications" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>Автозапуск с Windows</label>
+            <label class="switch">
+              <input type="checkbox" id="autostart">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>Тема</label>
+            <select id="theme">
+              <option value="dark">Темная</option>
+              <option value="light">Светлая</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

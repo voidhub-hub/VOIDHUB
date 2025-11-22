@@ -1,0 +1,44 @@
+{
+  "name": "voidhub",
+  "version": "1.0.0",
+  "description": "VoidHub - Свободная платформа для игр",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-game-installer": "node installer/build-game-installer.js",
+    "create-assets": "node installer/create-installer-assets.js"
+  },
+  "keywords": ["games", "platform", "installer"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "better-sqlite3": "^9.2.2"
+  },
+  "build": {
+    "appId": "com.voidhub.app",
+    "productName": "VoidHub",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

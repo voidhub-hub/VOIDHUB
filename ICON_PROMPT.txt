@@ -1,0 +1,41 @@
+ПРОМПТ ДЛЯ СОЗДАНИЯ ИКОНКИ VOIDHUB:
+
+=== Для Midjourney / DALL-E / Stable Diffusion ===
+
+Create a modern, space-themed app icon for VoidHub game distribution platform. 
+Design: A stylized game controller floating in cosmic void with glowing purple nebula,
+using a gradient from deep purple (#667eea) to pink (#764ba2). 
+Add subtle stars and cosmic particles around the controller.
+The icon should be sleek, professional, and recognizable at small sizes.
+Style: Flat design with cosmic depth, rounded square background.
+Colors: Deep purple, pink, dark space background, white star accents.
+Format: 256x256px, transparent background for .ico conversion.
+
+=== Альтернативный промпт (более детальный) ===
+
+App icon design for VoidHub gaming platform. 
+Central element: Geometric game controller silhouette with cosmic glow.
+Background: Rounded square with deep space gradient from purple to pink nebula.
+Accent: Small stars, cosmic particles, and subtle galaxy swirl.
+Style: Modern, space-inspired, minimalist, professional.
+Colors: #667eea (purple), #764ba2 (pink), dark void background, white star highlights.
+Lighting: Cosmic glow effect, nebula-like shadows for depth.
+Output: 256x256px, clean edges, suitable for Windows .ico format.
+
+=== Для простых генераторов ===
+
+Space gaming platform app icon, purple and pink cosmic gradient, 
+game controller in void, stars, nebula, modern flat design, 256x256px
+
+=== После создания иконки: ===
+
+1. Сохрани как PNG 256x256px
+2. Конвертируй в .ico онлайн: https://convertio.co/png-ico/
+3. Положи файл icon.ico в папку: installer/
+4. Для приложения: создай assets/icon.ico
+
+=== Размеры для разных целей ===
+- Windows .ico: 256x256, 128x128, 64x64, 48x48, 32x32, 16x16
+- macOS .icns: 1024x1024, 512x512, 256x256, 128x128
+- Инсталлятор header: 150x57px
+- Инсталлятор welcome: 164x314px
