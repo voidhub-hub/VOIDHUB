@@ -266,9 +266,173 @@ function addCoins(userId, amount, action) {
   db.prepare('INSERT INTO activity (user_id, action, coins_earned) VALUES (?, ?, ?)').run(userId, action, amount);
 }
 
+// Новые таблицы для v1.0.1
+db.exec(`
+  CREATE TABLE IF NOT EXISTS favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    game_id INTEGER NOT NULL,
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (game_id) REFERENCES games(id)
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS download_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    game_id INTEGER NOT NULL,
+    downloaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (game_id) REFERENCES games(id)
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_settings (
+    user_id INTEGER PRIMARY KEY,
+    theme TEXT DEFAULT 'dark',
+    notifications_enabled INTEGER DEFAULT 1,
+    auto_update INTEGER DEFAULT 1,
+    download_path TEXT,
+    language TEXT DEFAULT 'ru',
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT DEFAULT 'info',
+    read INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )
+`);
+
+// Избранное
+app.post('/api/favorites', (req, res) => {
+  const { userId, gameId } = req.body;
+  const exists = db.prepare('SELECT * FROM favorites WHERE user_id = ? AND game_id = ?').get(userId, gameId);
+  if (exists) {
+    return res.status(400).json({ success: false, message: 'Уже в избранном' });
+  }
+  db.prepare('INSERT INTO favorites (user_id, game_id) VALUES (?, ?)').run(userId, gameId);
+  res.json({ success: true });
+});
+
+app.delete('/api/favorites/:gameId', (req, res) => {
+  const { userId } = req.body;
+  db.prepare('DELETE FROM favorites WHERE user_id = ? AND game_id = ?').run(userId, req.params.gameId);
+  res.json({ success: true });
+});
+
+app.get('/api/user/:id/favorites', (req, res) => {
+  const favorites = db.prepare(`
+    SELECT games.* FROM favorites 
+    JOIN games ON favorites.game_id = games.id 
+    WHERE favorites.user_id = ?
+    ORDER BY favorites.added_at DESC
+  `).all(req.params.id);
+  res.json(favorites);
+});
+
+// История скачиваний
+app.get('/api/user/:id/history', (req, res) => {
+  const history = db.prepare(`
+    SELECT games.*, download_history.downloaded_at 
+    FROM download_history 
+    JOIN games ON download_history.game_id = games.id 
+    WHERE download_history.user_id = ?
+    ORDER BY download_history.downloaded_at DESC
+  `).all(req.params.id);
+  res.json(history);
+});
+
+// Настройки
+app.get('/api/user/:id/settings', (req, res) => {
+  let settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(req.params.id);
+  if (!settings) {
+    db.prepare('INSERT INTO user_settings (user_id) VALUES (?)').run(req.params.id);
+    settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(req.params.id);
+  }
+  res.json(settings);
+});
+
+app.post('/api/user/:id/settings', (req, res) => {
+  const settings = req.body;
+  const fields = Object.keys(settings).map(key => `${key} = ?`).join(', ');
+  const values = [...Object.values(settings), req.params.id];
+  db.prepare(`UPDATE user_settings SET ${fields} WHERE user_id = ?`).run(...values);
+  res.json({ success: true });
+});
+
+// Уведомления
+app.get('/api/user/:id/notifications', (req, res) => {
+  const unreadOnly = req.query.unreadOnly === 'true';
+  const query = unreadOnly 
+    ? 'SELECT * FROM notifications WHERE user_id = ? AND read = 0 ORDER BY created_at DESC'
+    : 'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50';
+  const notifications = db.prepare(query).all(req.params.id);
+  res.json(notifications);
+});
+
+app.post('/api/notifications/:id/read', (req, res) => {
+  db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+app.post('/api/user/:id/notifications/read-all', (req, res) => {
+  db.prepare('UPDATE notifications SET read = 1 WHERE user_id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// Статистика пользователя
+app.get('/api/user/:id/stats', (req, res) => {
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+  const gamesUploaded = db.prepare('SELECT COUNT(*) as count FROM games WHERE uploaded_by = ?').get(user.username);
+  const gamesDownloaded = db.prepare('SELECT COUNT(*) as count FROM download_history WHERE user_id = ?').get(req.params.id);
+  const totalXP = db.prepare('SELECT SUM(xp_earned) as total FROM activity WHERE user_id = ?').get(req.params.id);
+  const totalCoinsEarned = db.prepare('SELECT SUM(coins_earned) as total FROM activity WHERE user_id = ?').get(req.params.id);
+  const favoritesCount = db.prepare('SELECT COUNT(*) as count FROM favorites WHERE user_id = ?').get(req.params.id);
+  
+  res.json({
+    level: user.level,
+    xp: user.xp,
+    coins: user.coins,
+    gamesUploaded: gamesUploaded.count,
+    gamesDownloaded: gamesDownloaded.count,
+    totalXPEarned: totalXP.total || 0,
+    totalCoinsEarned: totalCoinsEarned.total || 0,
+    favoritesCount: favoritesCount.count
+  });
+});
+
+// Проверка версии
+app.get('/api/version', (req, res) => {
+  res.json({
+    version: '1.0.1',
+    downloadUrl: 'https://github.com/voidhub-hub/VOIDHUB/releases/download/v1.0.1/VoidHub-Setup.exe',
+    changelog: [
+      'Добавлено автообновление',
+      'Темная/светлая тема',
+      'Система уведомлений',
+      'Избранное',
+      'История скачиваний',
+      'Страница настроек',
+      'Детальная статистика'
+    ]
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на http://localhost:${PORT}`);
   console.log(`📊 База данных: ${path.join(__dirname, 'gameplatform.db')}`);
+  console.log(`📦 Версия: 1.0.1`);
 });
 
 

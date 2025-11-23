@@ -89,6 +89,69 @@ async function buyItem(userId, itemId) {
   });
 }
 
+// Избранное
+async function addFavorite(userId, gameId) {
+  return apiRequest('/favorites', {
+    method: 'POST',
+    body: JSON.stringify({ userId, gameId })
+  });
+}
+
+async function removeFavorite(userId, gameId) {
+  return apiRequest(`/favorites/${gameId}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ userId })
+  });
+}
+
+async function getFavorites(userId) {
+  return apiRequest(`/user/${userId}/favorites`);
+}
+
+// История
+async function getDownloadHistory(userId) {
+  return apiRequest(`/user/${userId}/history`);
+}
+
+// Настройки
+async function getSettings(userId) {
+  return apiRequest(`/user/${userId}/settings`);
+}
+
+async function updateSettings(userId, settings) {
+  return apiRequest(`/user/${userId}/settings`, {
+    method: 'POST',
+    body: JSON.stringify(settings)
+  });
+}
+
+// Уведомления
+async function getNotifications(userId, unreadOnly = false) {
+  return apiRequest(`/user/${userId}/notifications?unreadOnly=${unreadOnly}`);
+}
+
+async function markNotificationRead(notificationId) {
+  return apiRequest(`/notifications/${notificationId}/read`, {
+    method: 'POST'
+  });
+}
+
+async function markAllNotificationsRead(userId) {
+  return apiRequest(`/user/${userId}/notifications/read-all`, {
+    method: 'POST'
+  });
+}
+
+// Статистика
+async function getUserStats(userId) {
+  return apiRequest(`/user/${userId}/stats`);
+}
+
+// Проверка обновлений
+async function checkForUpdates() {
+  return apiRequest('/version');
+}
+
 module.exports = {
   register,
   login,
@@ -100,5 +163,16 @@ module.exports = {
   downloadGame,
   getShop,
   getUserItems,
-  buyItem
+  buyItem,
+  addFavorite,
+  removeFavorite,
+  getFavorites,
+  getDownloadHistory,
+  getSettings,
+  updateSettings,
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  getUserStats,
+  checkForUpdates
 };

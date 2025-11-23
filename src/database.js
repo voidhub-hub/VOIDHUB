@@ -75,6 +75,57 @@ function initDatabase() {
     )
   `);
 
+  // Таблица избранного
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS favorites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      game_id INTEGER NOT NULL,
+      added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (game_id) REFERENCES games(id)
+    )
+  `);
+
+  // Таблица истории скачиваний
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS download_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      game_id INTEGER NOT NULL,
+      downloaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (game_id) REFERENCES games(id)
+    )
+  `);
+
+  // Таблица настроек пользователя
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_settings (
+      user_id INTEGER PRIMARY KEY,
+      theme TEXT DEFAULT 'dark',
+      notifications_enabled INTEGER DEFAULT 1,
+      auto_update INTEGER DEFAULT 1,
+      download_path TEXT,
+      language TEXT DEFAULT 'ru',
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
+  // Таблица уведомлений
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      type TEXT DEFAULT 'info',
+      read INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
   // Добавляем предметы в магазин если их нет
   const itemsCount = db.prepare('SELECT COUNT(*) as count FROM shop_items').get();
   if (itemsCount.count === 0) {
@@ -192,6 +243,118 @@ function updateUserCustomization(userId, field, value) {
   return true;
 }
 
+// Избранное
+function addToFavorites(userId, gameId) {
+  const db = getDatabase();
+  const exists = db.prepare('SELECT * FROM favorites WHERE user_id = ? AND game_id = ?').get(userId, gameId);
+  if (exists) return false;
+  db.prepare('INSERT INTO favorites (user_id, game_id) VALUES (?, ?)').run(userId, gameId);
+  return true;
+}
+
+function removeFromFavorites(userId, gameId) {
+  const db = getDatabase();
+  db.prepare('DELETE FROM favorites WHERE user_id = ? AND game_id = ?').run(userId, gameId);
+  return true;
+}
+
+function getFavorites(userId) {
+  const db = getDatabase();
+  return db.prepare(`
+    SELECT games.* FROM favorites 
+    JOIN games ON favorites.game_id = games.id 
+    WHERE favorites.user_id = ?
+    ORDER BY favorites.added_at DESC
+  `).all(userId);
+}
+
+// История скачиваний
+function addToDownloadHistory(userId, gameId) {
+  const db = getDatabase();
+  db.prepare('INSERT INTO download_history (user_id, game_id) VALUES (?, ?)').run(userId, gameId);
+  db.prepare('UPDATE games SET downloads = downloads + 1 WHERE id = ?').run(gameId);
+  return true;
+}
+
+function getDownloadHistory(userId) {
+  const db = getDatabase();
+  return db.prepare(`
+    SELECT games.*, download_history.downloaded_at 
+    FROM download_history 
+    JOIN games ON download_history.game_id = games.id 
+    WHERE download_history.user_id = ?
+    ORDER BY download_history.downloaded_at DESC
+  `).all(userId);
+}
+
+// Настройки
+function getUserSettings(userId) {
+  const db = getDatabase();
+  let settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId);
+  if (!settings) {
+    db.prepare('INSERT INTO user_settings (user_id) VALUES (?)').run(userId);
+    settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId);
+  }
+  return settings;
+}
+
+function updateUserSettings(userId, settings) {
+  const db = getDatabase();
+  const fields = Object.keys(settings).map(key => `${key} = ?`).join(', ');
+  const values = [...Object.values(settings), userId];
+  db.prepare(`UPDATE user_settings SET ${fields} WHERE user_id = ?`).run(...values);
+  return true;
+}
+
+// Уведомления
+function createNotification(userId, title, message, type = 'info') {
+  const db = getDatabase();
+  db.prepare('INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)').run(userId, title, message, type);
+  return true;
+}
+
+function getNotifications(userId, unreadOnly = false) {
+  const db = getDatabase();
+  const query = unreadOnly 
+    ? 'SELECT * FROM notifications WHERE user_id = ? AND read = 0 ORDER BY created_at DESC'
+    : 'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50';
+  return db.prepare(query).all(userId);
+}
+
+function markNotificationRead(notificationId) {
+  const db = getDatabase();
+  db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(notificationId);
+  return true;
+}
+
+function markAllNotificationsRead(userId) {
+  const db = getDatabase();
+  db.prepare('UPDATE notifications SET read = 1 WHERE user_id = ?').run(userId);
+  return true;
+}
+
+// Статистика
+function getUserStats(userId) {
+  const db = getDatabase();
+  const user = getUserById(userId);
+  const gamesUploaded = db.prepare('SELECT COUNT(*) as count FROM games WHERE uploaded_by = ?').get(user.username);
+  const gamesDownloaded = db.prepare('SELECT COUNT(*) as count FROM download_history WHERE user_id = ?').get(userId);
+  const totalXP = db.prepare('SELECT SUM(xp_earned) as total FROM activity WHERE user_id = ?').get(userId);
+  const totalCoinsEarned = db.prepare('SELECT SUM(coins_earned) as total FROM activity WHERE user_id = ?').get(userId);
+  const favoritesCount = db.prepare('SELECT COUNT(*) as count FROM favorites WHERE user_id = ?').get(userId);
+  
+  return {
+    level: user.level,
+    xp: user.xp,
+    coins: user.coins,
+    gamesUploaded: gamesUploaded.count,
+    gamesDownloaded: gamesDownloaded.count,
+    totalXPEarned: totalXP.total || 0,
+    totalCoinsEarned: totalCoinsEarned.total || 0,
+    favoritesCount: favoritesCount.count
+  };
+}
+
 module.exports = {
   initDatabase,
   getDatabase,
@@ -203,5 +366,17 @@ module.exports = {
   purchaseItem,
   getUserItems,
   getShopItems,
-  updateUserCustomization
+  updateUserCustomization,
+  addToFavorites,
+  removeFromFavorites,
+  getFavorites,
+  addToDownloadHistory,
+  getDownloadHistory,
+  getUserSettings,
+  updateUserSettings,
+  createNotification,
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  getUserStats
 };

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Настройки - VoidHub</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="settings-container">
+    <h1>⚙️ Настройки</h1>
+    
+    <div class="settings-section">
+      <h2>Внешний вид</h2>
+      <div class="setting-item">
+        <label>Тема</label>
+        <select id="theme-select">
+          <option value="dark">Темная</option>
+          <option value="light">Светлая</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Уведомления</h2>
+      <div class="setting-item">
+        <label>
+          <input type="checkbox" id="notifications-enabled" checked>
+          Включить уведомления
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Обновления</h2>
+      <div class="setting-item">
+        <label>
+          <input type="checkbox" id="auto-update" checked>
+          Автоматически проверять обновления
+        </label>
+      </div>
+      <button id="check-updates-btn" class="btn">Проверить обновления</button>
+    </div>
+
+    <div class="settings-section">
+      <h2>Загрузки</h2>
+      <div class="setting-item">
+        <label>Папка для загрузок</label>
+        <input type="text" id="download-path" placeholder="Выберите папку">
+        <button id="browse-folder-btn" class="btn">Обзор</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Язык</h2>
+      <div class="setting-item">
+        <label>Язык интерфейса</label>
+        <select id="language-select">
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button id="save-settings-btn" class="btn btn-primary">Сохранить</button>
+      <button id="back-btn" class="btn">Назад</button>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

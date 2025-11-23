@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -360,3 +360,47 @@ ipcMain.on('get-games', (event) => {
   
   event.reply('games-list', gamesDb);
 });
+
+
+// Выбор папки для загрузок
+ipcMain.handle('select-folder', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory']
+  });
+  
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0];
+  }
+  return null;
+});
+
+// Проверка обновлений при запуске
+async function checkForUpdates() {
+  try {
+    const versionInfo = await api.checkForUpdates();
+    const currentVersion = require('../package.json').version;
+    
+    if (versionInfo.version !== currentVersion) {
+      const { response } = await dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Доступно обновление',
+        message: `Доступна новая версия ${versionInfo.version}!`,
+        detail: `Изменения:\n${versionInfo.changelog.join('\n')}`,
+        buttons: ['Скачать', 'Позже']
+      });
+      
+      if (response === 0) {
+        require('electron').shell.openExternal(versionInfo.downloadUrl);
+      }
+    }
+  } catch (error) {
+    console.error('Ошибка проверки обновлений:', error);
+  }
+}
+
+// Проверяем обновления через 5 секунд после запуска
+setTimeout(() => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    checkForUpdates();
+  }
+}, 5000);
